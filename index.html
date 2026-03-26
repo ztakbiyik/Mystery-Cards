@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Mystery Cards - Multiplayer Guessing Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body, #root {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .app-container {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+    
+    /* Loading */
+    .loading-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.1);
+      border-top-color: #e94560;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Landing Screen */
+    .landing {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .landing-content {
+      text-align: center;
+      z-index: 10;
+    }
+    
+    .game-title {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      background: linear-gradient(135deg, #e94560 0%, #ff6b6b 50%, #ffd93d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .title-icon {
+      font-size: 0.8em;
+      -webkit-text-fill-color: initial;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-10px) rotate(5deg); }
+    }
+    
+    .subtitle {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 3rem;
+    }
+    
+    .landing-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      -webkit-appearance: none;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+      color: white;
+      box-shadow: 0 8px 32px rgba(233, 69, 96, 0.4);
+    }
+    
+    .btn-primary:hover:not(:disabled),
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(233, 69, 96, 0.5);
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .btn-secondary:hover:not(:disabled),
+    .btn-secondary:active:not(:disabled) {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .btn-icon {
+      font-size: 1.2em;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.9rem;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .join-form {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    .code-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      -webkit-appearance: none;
+    }
+    
+    .code-input::placeholder {
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0;
+    }
+    
+    .code-input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+    
+    .floating-cards {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    
+    .floating-card {
+      position: absolute;
+      width: 60px;
+      height: 80px;
+      background: linear-gradient(135deg, rgba(233,69,96,0.3), rgba(255,107,107,0.1));
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: floatCard 20s ease-in-out infinite;
+    }
+    
+    .fc-0 { top: 10%; left: 10%; animation-delay: 0s; }
+    .fc-1 { top: 20%; right: 15%; animation-delay: -3s; }
+    .fc-2 { bottom: 30%; left: 5%; animation-delay: -6s; }
+    .fc-3 { bottom: 20%; right: 10%; animation-delay: -9s; }
+    .fc-4 { top: 50%; left: 20%; animation-delay: -12s; }
+    .fc-5 { top: 40%; right: 25%; animation-delay: -15s; }
+    
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      25% { transform: translateY(-30px) rotate(5deg); opacity: 0.5; }
+      50% { transform: translateY(-10px) rotate(-3deg); opacity: 0.4; }
+      75% { transform: translateY(-20px) rotate(2deg); opacity: 0.6; }
+    }
+    
+    /* Setup Screen */
+    .setup-screen {
+      min-height: 100vh;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .setup-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .setup-header h2 {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .game-code-display {
+      display: inline-flex;
+      flex-direction: column;
+      background: rgba(255,255,255,0.1);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .game-code-display.large {
+      padding: 1.5rem 3rem;
+    }
+    
+    .code-label {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .code-value {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1.5rem;
+      color: #ffd93d;
+      letter-spacing: 0.2em;
+    }
+    
+    .game-code-display.large .code-value {
+      font-size: 2.5rem;
+    }
+    
+    .setup-section {
+      margin-bottom: 2rem;
+    }
+    
+    .section-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .card-count-selector {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .count-btn {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      -webkit-appearance: none;
+    }
+    
+    .count-btn:hover,
+    .count-btn:active {
+      border-color: #e94560;
+    }
+    
+    .count-btn.active {
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
+      border-color: transparent;
+    }
+    
+    .upload-area {
+      margin-bottom: 1.5rem;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .upload-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border: 2px dashed rgba(255,255,255,0.3);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-label:hover,
+    .upload-label:active {
+      border-color: #e94560;
+      background: rgba(233,69,96,0.1);
+    }
+    
+    .upload-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.25rem;
+    }
+    
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+    }
+    
+    .preview-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .remove-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-appearance: none;
+    }
+    
+    .btn-start {
+      width: 100%;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .btn-start.ready {
+      background: linear-gradient(135deg, #00d9a5, #00b894);
+      color: white;
+      box-shadow: 0 8px 32px rgba(0,217,165,0.4);
+    }
+    
+    .btn-start.ready:active {
+      transform: scale(0.98);
+    }
+    
+    /* Waiting Room */
+    .waiting-room {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    .waiting-room h2 {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+    }
+    
+    .you-are {
+      background: rgba(255,217,61,0.2);
+      border: 1px solid #ffd93d;
+      padding: 0.5rem 1.5rem;
+      border-radius: 20px;
+      margin-bottom: 2rem;
+      color: #ffd93d;
+      font-weight: 600;
+    }
+    
+    .players-status {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .player-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      min-width: 140px;
+      transition: all 0.3s ease;
+    }
+    
+    .player-slot.joined {
+      border-color: #00d9a5;
+      background: rgba(0,217,165,0.1);
+    }
+    
+    .player-slot.you {
+      border-color: #ffd93d;
+      background: rgba(255,217,61,0.1);
+    }
+    
+    .player-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .player-label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .player-status {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .player-slot.joined .player-status {
+      color: #00d9a5;
+    }
+    
+    .player-slot.you .player-status {
+      color: #ffd93d;
+    }
+    
+    .hint {
+      margin-top: 2rem;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    /* Card Selection */
+    .card-selection {
+      min-height: 100vh;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .selection-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .selection-header h2 {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .selection-header p {
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .selection-grid {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .selection-card {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .selection-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .selection-card:hover,
+    .selection-card:active {
+      transform: scale(1.05);
+      border-color: rgba(255,255,255,0.3);
+    }
+    
+    .selection-card.selected {
+      border-color: #ffd93d;
+      box-shadow: 0 0 20px rgba(255,217,61,0.4);
+      transform: scale(1.05);
+    }
+    
+    .selected-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,217,61,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+    }
+    
+    .btn-confirm {
+      width: 100%;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .btn-confirm.ready {
+      background: linear-gradient(135deg, #ffd93d, #f39c12);
+      color: #1a1a2e;
+      box-shadow: 0 8px 32px rgba(255,217,61,0.4);
+    }
+    
+    .selection-waiting {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+    
+    .selected-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .check-icon {
+      font-size: 4rem;
+      color: #00d9a5;
+      margin-bottom: 1rem;
+    }
+    
+    .selected-indicator h3 {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1.5rem;
+    }
+    
+    .waiting-text {
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .pulse-ring {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border: 2px solid rgba(0,217,165,0.3);
+      border-radius: 50%;
+      animation: pulse 2s ease-out infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    
+    /* Game Board */
+    .game-board {
+      min-height: 100vh;
+      padding: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .player-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .btn-restart {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      -webkit-appearance: none;
+    }
+    
+    .btn-restart:hover,
+    .btn-restart:active {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .my-card-section {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .my-card-section h3 {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .my-card {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 3px solid #00d9a5;
+      box-shadow: 0 0 30px rgba(0,217,165,0.3);
+      position: relative;
+    }
+    
+    .my-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .my-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 28px;
+      height: 28px;
+      background: #00d9a5;
+      color: #1a1a2e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    
+    .divider-line {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.85rem;
+    }
+    
+    .divider-line::before,
+    .divider-line::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.15);
+    }
+    
+    .cards-grid {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .game-card {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .game-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: all 0.3s ease;
+    }
+    
+    .game-card.normal {
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .game-card.dimmed {
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+    
+    .game-card.dimmed img {
+      opacity: 0.3;
+      filter: grayscale(100%);
+    }
+    
+    .game-card.closed {
+      border: 2px solid rgba(233,69,96,0.5);
+    }
+    
+    .game-card.closed img {
+      opacity: 0.1;
+      filter: grayscale(100%) blur(2px);
+    }
+    
+    .closed-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(233,69,96,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .closed-overlay span {
+      font-size: 1.5rem;
+      color: #e94560;
+      font-weight: 700;
+    }
+    
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .legend-card {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .legend-card.dimmed {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .legend-card.closed {
+      background: rgba(233,69,96,0.3);
+    }
+    
+    .error-message {
+      background: rgba(233,69,96,0.2);
+      border: 1px solid #e94560;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+      .game-title {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .players-status {
+        flex-direction: column;
+      }
+      
+      .preview-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBwph32ZnbguDlLU-sTxAmJI_Hy9UEq9iM",
+      authDomain: "card-game-5d3be.firebaseapp.com",
+      databaseURL: "https://card-game-5d3be-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "card-game-5d3be",
+      storageBucket: "card-game-5d3be.firebasestorage.app",
+      messagingSenderId: "266008135864",
+      appId: "1:266008135864:web:b4b85b1eb63c3af91a4c4d",
+      measurementId: "G-C94QW51MX7"
+    };
+
+    // Initialize Firebase
+    let db = null;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.database();
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+    }
+
+    // Hook for syncing game state with Firebase
+    const useFirebaseGame = (gameCode) => {
+      const [game, setGame] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        if (!gameCode || !db) {
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        const gameRef = db.ref(`games/${gameCode}`);
+        
+        const handleValue = (snapshot) => {
+          const data = snapshot.val();
+          setGame(data);
+          setLoading(false);
+        };
+
+        const handleError = (err) => {
+          console.error("Firebase error:", err);
+          setError(err.message);
+          setLoading(false);
+        };
+
+        gameRef.on('value', handleValue, handleError);
+
+        return () => {
+          gameRef.off('value', handleValue);
+        };
+      }, [gameCode]);
+
+      const updateGame = useCallback(async (updates) => {
+        if (!gameCode || !db) return;
+        try {
+          await db.ref(`games/${gameCode}`).update(updates);
+        } catch (err) {
+          console.error("Update error:", err);
+          setError(err.message);
+        }
+      }, [gameCode]);
+
+      return { game, loading, error, updateGame };
+    };
+
+    // Check if a game exists
+    const checkGameExists = async (code) => {
+      if (!db) return null;
+      try {
+        const snapshot = await db.ref(`games/${code}`).once('value');
+        return snapshot.val();
+      } catch (err) {
+        console.error("Check game error:", err);
+        return null;
+      }
+    };
+
+    // Create a new game
+    const createNewGame = async (code) => {
+      if (!db) return false;
+      try {
+        await db.ref(`games/${code}`).set({
+          code,
+          phase: 'setup',
+          cardCount: 10,
+          cards: [],
+          playerA: { joined: true, selectedCard: -1, cardStates: {} },
+          playerB: { joined: false, selectedCard: -1, cardStates: {} },
+          createdAt: Date.now()
+        });
+        return true;
+      } catch (err) {
+        console.error("Create game error:", err);
+        return false;
+      }
+    };
+
+    // Loading Screen
+    const LoadingScreen = () => (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+
+    // Landing Screen
+    const LandingScreen = ({ onCreateGame, onJoinGame, error }) => {
+      const [joinCode, setJoinCode] = useState('');
+      const [joining, setJoining] = useState(false);
+      const [creating, setCreating] = useState(false);
+      
+      const handleJoin = async () => {
+        if (!joinCode) return;
+        setJoining(true);
+        await onJoinGame(joinCode.trim());
+        setJoining(false);
+      };
+
+      const handleCreate = async () => {
+        setCreating(true);
+        await onCreateGame();
+        setCreating(false);
+      };
+      
+      return (
+        <div className="landing">
+          <div className="landing-content">
+            <h1 className="game-title">
+              <span className="title-icon">🃏</span>
+              Mystery Cards
+            </h1>
+            <p className="subtitle">A two-player guessing game</p>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <div className="landing-actions">
+              <button 
+                className="btn btn-primary" 
+                onClick={handleCreate}
+                disabled={creating}
+              >
+                <span className="btn-icon">✦</span>
+                {creating ? 'Creating...' : 'Create New Game'}
+              </button>
+              
+              <div className="divider">
+                <span>or join existing</span>
+              </div>
+              
+              <div className="join-form">
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className="code-input"
+                />
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleJoin}
+                  disabled={!joinCode || joining}
+                >
+                  {joining ? '...' : 'Join'}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="floating-cards">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`floating-card fc-${i}`} />
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    // Setup Screen (Player A sets up the game)
+    const SetupScreen = ({ gameCode, onStart }) => {
+      const [cardCount, setCardCount] = useState(10);
+      const [images, setImages] = useState([]);
+      const [uploading, setUploading] = useState(false);
+      const [starting, setStarting] = useState(false);
+      
+      const handleFileUpload = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        
+        setUploading(true);
+        
+        const readers = files.slice(0, cardCount - images.length).map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxSize = 200;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                  if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                  }
+                } else {
+                  if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                  }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+              };
+              img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+        
+        Promise.all(readers).then(results => {
+          setImages(prev => [...prev, ...results].slice(0, cardCount));
+          setUploading(false);
+        });
+      };
+      
+      const removeImage = (index) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+      };
+      
+      const handleStart = async () => {
+        if (images.length !== cardCount) return;
+        setStarting(true);
+        await onStart(images, cardCount);
+        setStarting(false);
+      };
+      
+      const canStart = images.length === cardCount;
+      
+      return (
+        <div className="setup-screen">
+          <div className="setup-header">
+            <h2>Game Setup</h2>
+            <p style={{color: 'rgba(255,255,255,0.6)', marginBottom: '1rem'}}>You are Player A</p>
+            <div className="game-code-display">
+              <span className="code-label">Share this code with Player B:</span>
+              <span className="code-value">{gameCode}</span>
+            </div>
+          </div>
+          
+          <div className="setup-section">
+            <label className="section-label">Number of Cards</label>
+            <div className="card-count-selector">
+              {[10, 16, 20].map(num => (
+                <button
+                  key={num}
+                  className={`count-btn ${cardCount === num ? 'active' : ''}`}
+                  onClick={() => {
+                    setCardCount(num);
+                    setImages(prev => prev.slice(0, num));
+                  }}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="setup-section">
+            <label className="section-label">
+              Upload Images ({images.length}/{cardCount})
+            </label>
+            
+            <div className="upload-area">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                id="image-upload"
+                className="file-input"
+              />
+              <label htmlFor="image-upload" className="upload-label">
+                {uploading ? (
+                  <span>Uploading...</span>
+                ) : (
+                  <>
+                    <span className="upload-icon">📷</span>
+                    <span>Tap to upload images</span>
+                    <span className="upload-hint">
+                      {images.length < cardCount 
+                        ? `Select ${cardCount - images.length} more` 
+                        : 'All images uploaded!'}
+                    </span>
+                  </>
+                )}
+              </label>
+            </div>
+            
+            {images.length > 0 && (
+              <div className="preview-grid">
+                {images.map((img, i) => (
+                  <div key={i} className="preview-item">
+                    <img src={img} alt={`Card ${i + 1}`} />
+                    <button className="remove-btn" onClick={() => removeImage(i)}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <button 
+            className={`btn btn-start ${canStart ? 'ready' : ''}`}
+            onClick={handleStart}
+            disabled={!canStart || starting}
+          >
+            {starting ? 'Starting...' : canStart ? 'Start Game' : `Upload ${cardCount - images.length} more images`}
+          </button>
+        </div>
+      );
+    };
+
+    // Waiting Room
+    const WaitingRoom = ({ game, playerId }) => {
+      const playerAJoined = game?.playerA?.joined === true;
+      const playerBJoined = game?.playerB?.joined === true;
+      
+      return (
+        <div className="waiting-room">
+          <h2>Waiting for Player B</h2>
+          
+          <div className="you-are">You are Player {playerId}</div>
+          
+          <div className="game-code-display large">
+            <span className="code-label">Game Code</span>
+            <span className="code-value">{game?.code}</span>
+          </div>
+          
+          <div className="players-status">
+            <div className={`player-slot ${playerAJoined ? 'joined' : ''} ${playerId === 'A' ? 'you' : ''}`}>
+              <span className="player-icon">👤</span>
+              <span className="player-label">Player A</span>
+              <span className="player-status">
+                {playerId === 'A' ? '✓ You' : playerAJoined ? '✓ Ready' : 'Waiting...'}
+              </span>
+            </div>
+            <div className={`player-slot ${playerBJoined ? 'joined' : ''} ${playerId === 'B' ? 'you' : ''}`}>
+              <span className="player-icon">👤</span>
+              <span className="player-label">Player B</span>
+              <span className="player-status">
+                {playerId === 'B' ? '✓ You' : playerBJoined ? '✓ Ready' : 'Waiting...'}
+              </span>
+            </div>
+          </div>
+          
+          <p className="hint">Share the code with your friend!</p>
+        </div>
+      );
+    };
+
+    // Card Selection
+    const CardSelection = ({ game, playerId, onSelect }) => {
+      const [selectedCard, setSelectedCard] = useState(null);
+      const [confirming, setConfirming] = useState(false);
+      const playerKey = playerId === 'A' ? 'playerA' : 'playerB';
+      const hasSelected = game[playerKey]?.selectedCard >= 0;
+      const otherPlayerKey = playerId === 'A' ? 'playerB' : 'playerA';
+      const otherSelected = game[otherPlayerKey]?.selectedCard >= 0;
+      
+      const handleConfirm = async () => {
+        if (selectedCard === null) return;
+        setConfirming(true);
+        await onSelect(selectedCard);
+        setConfirming(false);
+      };
+      
+      if (hasSelected) {
+        return (
+          <div className="selection-waiting">
+            <div className="selected-indicator">
+              <span className="check-icon">✓</span>
+              <h3>Card Selected!</h3>
+            </div>
+            <p className="waiting-text">
+              {otherSelected 
+                ? 'Both players ready! Starting game...' 
+                : 'Waiting for other player to select...'}
+            </p>
+            <div className="pulse-ring" />
+          </div>
+        );
+      }
+      
+      const cols = game.cardCount <= 10 ? 5 : game.cardCount <= 16 ? 4 : 5;
+      
+      return (
+        <div className="card-selection">
+          <div className="selection-header">
+            <h2>Choose Your Secret Card</h2>
+            <p>Player {playerId}: Pick a card - the other player will try to guess which one!</p>
+          </div>
+          
+          <div className="selection-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+            {(game.cards || []).map((card, i) => (
+              <div
+                key={i}
+                className={`selection-card ${selectedCard === i ? 'selected' : ''}`}
+                onClick={() => setSelectedCard(i)}
+              >
+                <img src={card.image} alt={`Card ${i + 1}`} />
+                {selectedCard === i && <div className="selected-overlay">✓</div>}
+              </div>
+            ))}
+          </div>
+          
+          <button
+            className={`btn btn-confirm ${selectedCard !== null ? 'ready' : ''}`}
+            onClick={handleConfirm}
+            disabled={selectedCard === null || confirming}
+          >
+            {confirming ? 'Confirming...' : selectedCard !== null ? 'Confirm Selection' : 'Select a card'}
+          </button>
+        </div>
+      );
+    };
+
+    // Game Board - Each player sees THEIR OWN secret card
+    const GameBoard = ({ game, playerId, onUpdateCardState, onRestart }) => {
+      const playerKey = playerId === 'A' ? 'playerA' : 'playerB';
+      const myCardStates = game[playerKey]?.cardStates || {};
+      const mySelectedCard = game[playerKey]?.selectedCard;
+      
+      const handleCardClick = (cardIndex) => {
+        const currentState = myCardStates[cardIndex] || 'normal';
+        const nextState = currentState === 'normal' ? 'dimmed' 
+                        : currentState === 'dimmed' ? 'closed' 
+                        : 'normal';
+        onUpdateCardState(cardIndex, nextState);
+      };
+      
+      const cols = game.cardCount <= 10 ? 5 : game.cardCount <= 16 ? 4 : 5;
+      const cards = game.cards || [];
+      
+      return (
+        <div className="game-board">
+          <div className="board-header">
+            <div className="player-badge">
+              <span className="badge-icon">🎮</span>
+              <span>Player {playerId}</span>
+            </div>
+            <button className="btn-restart" onClick={onRestart}>
+              ↻ New Round
+            </button>
+          </div>
+          
+          <div className="my-card-section">
+            <h3>Your Secret Card</h3>
+            <div className="my-card">
+              {mySelectedCard >= 0 && cards[mySelectedCard] && (
+                <img src={cards[mySelectedCard].image} alt="Your secret card" />
+              )}
+              <div className="my-badge">YOU</div>
+            </div>
+          </div>
+          
+          <div className="divider-line">
+            <span>Tap cards below to dim or close them</span>
+          </div>
+          
+          <div className="cards-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+            {cards.map((card, i) => {
+              const state = myCardStates[i] || 'normal';
+              return (
+                <div
+                  key={i}
+                  className={`game-card ${state}`}
+                  onClick={() => handleCardClick(i)}
+                >
+                  <div className="card-inner">
+                    <img src={card.image} alt={`Card ${i + 1}`} />
+                    {state === 'closed' && (
+                      <div className="closed-overlay">
+                        <span>✕</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="legend">
+            <div className="legend-item">
+              <div className="legend-card normal" />
+              <span>Normal</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-card dimmed" />
+              <span>Dimmed</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-card closed" />
+              <span>Closed</span>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Main App
+    function App() {
+      const [view, setView] = useState('landing');
+      const [gameCode, setGameCode] = useState(null);
+      const [playerId, setPlayerId] = useState(null);
+      const [error, setError] = useState(null);
+      
+      const { game, loading, error: firebaseError, updateGame } = useFirebaseGame(gameCode);
+      
+      const generateCode = () => {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+      };
+      
+      // Create game - creator becomes Player A
+      const createGame = async () => {
+        setError(null);
+        const code = generateCode();
+        const success = await createNewGame(code);
+        if (success) {
+          setGameCode(code);
+          setPlayerId('A'); // Creator is Player A
+          setView('setup');
+        } else {
+          setError('Failed to create game. Please try again.');
+        }
+      };
+      
+      // Join game - joiner becomes Player B
+      const joinGame = async (code) => {
+        setError(null);
+        const upperCode = code.toUpperCase().trim();
+        
+        const existingGame = await checkGameExists(upperCode);
+        
+        if (!existingGame) {
+          setError('Game not found! Check the code and try again.');
+          return;
+        }
+        
+        if (existingGame.phase === 'setup') {
+          setError('Game is still being set up. Please wait.');
+          return;
+        }
+        
+        // Check if Player B slot is available
+        if (existingGame.playerB?.joined === true) {
+          setError('Game is full! Player B has already joined.');
+          return;
+        }
+        
+        try {
+          // Join as Player B
+          await db.ref(`games/${upperCode}/playerB/joined`).set(true);
+          
+          setGameCode(upperCode);
+          setPlayerId('B');
+          setView('game');
+        } catch (err) {
+          console.error("Join error:", err);
+          setError('Failed to join game. Please try again.');
+        }
+      };
+      
+      // Start game after setup
+      const startGame = async (images, cardCount) => {
+        const cards = images.map((img, i) => ({ id: i, image: img }));
+        await updateGame({
+          phase: 'waiting',
+          cardCount,
+          cards,
+          'playerA/selectedCard': -1,
+          'playerA/cardStates': {},
+          'playerB/joined': false,
+          'playerB/selectedCard': -1,
+          'playerB/cardStates': {}
+        });
+        setView('game');
+      };
+      
+      // Select a card
+      const selectCard = async (cardIndex) => {
+        const playerKey = playerId === 'A' ? 'playerA' : 'playerB';
+        await db.ref(`games/${gameCode}/${playerKey}/selectedCard`).set(cardIndex);
+      };
+      
+      // Update card state (dim/close)
+      const updateCardState = async (cardIndex, state) => {
+        const playerKey = playerId === 'A' ? 'playerA' : 'playerB';
+        await db.ref(`games/${gameCode}/${playerKey}/cardStates/${cardIndex}`).set(state);
+      };
+      
+      // Restart game (new round)
+      const restartGame = async () => {
+        await updateGame({
+          phase: 'selecting',
+          'playerA/selectedCard': -1,
+          'playerA/cardStates': {},
+          'playerB/selectedCard': -1,
+          'playerB/cardStates': {}
+        });
+      };
+      
+      // Auto-advance phases
+      useEffect(() => {
+        if (!game || !gameCode) return;
+        
+        const bothJoined = game.playerA?.joined === true && game.playerB?.joined === true;
+        const bothSelected = game.playerA?.selectedCard >= 0 && game.playerB?.selectedCard >= 0;
+        
+        if (game.phase === 'waiting' && bothJoined) {
+          updateGame({ phase: 'selecting' });
+        }
+        
+        if (game.phase === 'selecting' && bothSelected) {
+          updateGame({ phase: 'playing' });
+        }
+      }, [game, gameCode, updateGame]);
+      
+      // Render
+      const renderContent = () => {
+        if (view === 'landing') {
+          return <LandingScreen onCreateGame={createGame} onJoinGame={joinGame} error={error || firebaseError} />;
+        }
+        
+        if (loading) {
+          return <LoadingScreen />;
+        }
+        
+        if (view === 'setup' && playerId === 'A') {
+          return <SetupScreen gameCode={gameCode} onStart={startGame} />;
+        }
+        
+        if (view === 'game' && game) {
+          if (game.phase === 'waiting') {
+            return <WaitingRoom game={game} playerId={playerId} />;
+          }
+          
+          if (game.phase === 'selecting') {
+            return <CardSelection game={game} playerId={playerId} onSelect={selectCard} />;
+          }
+          
+          if (game.phase === 'playing') {
+            return (
+              <GameBoard 
+                game={game} 
+                playerId={playerId} 
+                onUpdateCardState={updateCardState}
+                onRestart={restartGame}
+              />
+            );
+          }
+        }
+        
+        return <LandingScreen onCreateGame={createGame} onJoinGame={joinGame} error={error || firebaseError} />;
+      };
+      
+      return (
+        <div className="app-container">
+          {renderContent()}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
